@@ -1,16 +1,29 @@
 # Build artifacts
+
 /bin/
 *.exe
-*.test
+dashdev
 
-# Editor and tooling
-.vscode/
+# Dependency directories
+
+vendor/
+
+# IDE and editor
+
 .idea/
+.vscode/
 *.swp
 *.swo
+*~
 
-# Local scratch
+# OS files
+
+.DS_Store
+Thumbs.db
+
+# Local run artifacts (allowlisted in the repo so first-time users can read them,
+
+# but not committed by people running the tool locally)
+
 /tmp/
-docs/*.png
-docs/*.gif
-docs/*.webp
+C:\\Temp\\

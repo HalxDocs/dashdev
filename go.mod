@@ -2,6 +2,8 @@ module github.com/HalxDocs/dashdev
 
 go 1.26.0
 
+toolchain go1.26.4
+
 require (
 	charm.land/bubbles/v2 v2.2.1 // indirect
 	charm.land/bubbletea/v2 v2.0.10 // indirect
