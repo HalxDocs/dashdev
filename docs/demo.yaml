@@ -1,16 +1,21 @@
 # A minimal demo configuration used to run the dashboard for screenshots
-# and a quick smoke test. Copy it to dashdev.yaml and run
+# and a quick smoke test. Copy it to dashdev.yaml at the repository root
+# and run
 #
 #   bin/dashdev up
 #
-# alpha is a long-running service, beta is a one-shot service that exits
-# cleanly. This exercises both a running service and an exited one.
+# Both services are the integration test helper (testdata/helper) run with
+# `go run`, so the demo works on any OS with Go installed and needs no
+# platform-specific commands.
+#
+# alpha serves until stopped, beta exits cleanly at once. This exercises
+# both a running service and an exited one.
 
 version: 1
 
 services:
   - name: alpha
-    command: [sleep, 30]
+    command: [go, run, ./testdata/helper, -mode, serve, -label, alpha]
 
   - name: beta
-    command: [exit, 0]
+    command: [go, run, ./testdata/helper, -mode, exit, -code, 0, -label, beta]

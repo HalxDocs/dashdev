@@ -32,8 +32,9 @@ The example is shipped as [`dashdev.example.yaml`](dashdev.example.yaml) — cop
 it to `dashdev.yaml` and edit it. A minimal run for screenshots and a quick smoke
 test is bundled as [`docs/demo.yaml`](docs/demo.yaml), which defines two services:
 
-- `alpha` runs `sleep 30` (a long-running service), and
-- `beta` runs `exit 0` (a one-shot service that exits cleanly).
+- `alpha` serves until stopped (a long-running service, via `go run`
+  `./testdata/helper`), and
+- `beta` exits cleanly at once (a one-shot service).
 
 ```sh
 cp docs/demo.yaml dashdev.yaml
