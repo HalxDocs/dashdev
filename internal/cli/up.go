@@ -72,13 +72,18 @@ func runUp(ctx context.Context, args []string, env Env) int {
 	}()
 
 	stopped := make(chan error, 1)
+	// Subscribe before the manager starts: the bus keeps no history, so a
+	// frontend that subscribes after Run begins would miss ServiceAdded and
+	// show state changes for services it never listed.
+	sub := bus.Subscribe(0)
+	defer sub.Close()
 	go func() { stopped <- manager.Run(runCtx) }()
 
 	fmt.Fprintf(env.Stderr, "dashdev: %d services from %s\n", len(loaded.Specs()), loaded.Path)
 
 	runErr := runFrontend(runCtx, frontendOptions{
 		headless: *headless,
-		bus:      bus,
+		sub:      sub,
 		store:    store,
 		manager:  manager,
 		clock:    clock,
@@ -98,11 +103,13 @@ func runUp(ctx context.Context, args []string, env Env) int {
 // frontendOptions is the shared plumbing of the two ways to watch a run.
 type frontendOptions struct {
 	headless bool
-	bus      *events.Bus
-	store    *logs.Store
-	manager  *process.Manager
-	clock    platform.Clock
-	env      Env
+	// sub is created before the manager starts so no lifecycle event is
+	// missed; see runUp.
+	sub     *events.Subscription
+	store   *logs.Store
+	manager *process.Manager
+	clock   platform.Clock
+	env     Env
 }
 
 // runFrontend shows the dashboard, or prints lifecycle changes when the
@@ -112,7 +119,7 @@ func runFrontend(ctx context.Context, options frontendOptions) error {
 		return runHeadless(ctx, options)
 	}
 	return tui.Run(ctx, tui.Options{
-		Subscription: options.bus.Subscribe(0),
+		Subscription: options.sub,
 		Store:        options.store,
 		Controller:   options.manager,
 		Clock:        options.clock,
@@ -127,8 +134,7 @@ func runFrontend(ctx context.Context, options frontendOptions) error {
 // terminal, which is what a script or an integration test wants. It runs until
 // the context is done.
 func runHeadless(ctx context.Context, options frontendOptions) error {
-	subscription := options.bus.Subscribe(0)
-	defer subscription.Close()
+	subscription := options.sub
 
 	for {
 		batch, err := subscription.Pop(ctx)
