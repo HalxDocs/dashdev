@@ -1,0 +1,16 @@
+# Build artifacts
+/bin/
+*.exe
+*.test
+
+# Editor and tooling
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local scratch
+/tmp/
+docs/*.png
+docs/*.gif
+docs/*.webp
