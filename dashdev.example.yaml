@@ -1,0 +1,88 @@
+# Example dashdev configuration. Copy this to dashdev.yaml and edit it.
+#
+# Every field shown here is optional except `services`, and every field is
+# validated before anything is started.
+
+version: 1
+
+# Defaults are inherited by every service and can be overridden per service.
+defaults:
+  # Relative to the directory containing this file, never the invocation cwd.
+  directory: .
+  env:
+    - name: LOG_LEVEL
+      value: info
+  # Restart settings apply to services that do not declare their own.
+  restart:
+    policy: on-failure
+    max_attempts: 3
+    backoff:
+      base: 250ms
+      max: 30s
+      factor: 2
+
+services:
+  # A command list is executed verbatim: no shell, no quoting, no globbing.
+  - name: db
+    command: [postgres, -D, ./data]
+    directory: ./db
+    # A tcp health check only needs the process to accept connections.
+    health:
+      type: tcp
+      target: 127.0.0.1:5432
+      interval: 2s
+      timeout: 1s
+      retries: 5
+
+  # A single string is split with shell-like quoting rules but still run
+  # directly. Set shell: true if you really need a shell.
+  - name: redis
+    command: "redis-server --port 6379"
+    health:
+      type: tcp
+      target: 127.0.0.1:6379
+
+  # Waits for the database to pass its health check before starting.
+  - name: api
+    command: [go, run, ./cmd/api]
+    directory: ./api
+    depends_on:
+      db: healthy
+      redis: started
+    env:
+      - name: DATABASE_URL
+        value: postgres://localhost:5432/app
+    restart:
+      policy: always
+      backoff:
+        base: 500ms
+        factor: 2
+    health:
+      type: http
+      target: http://127.0.0.1:8080/healthz
+      start_period: 5s
+
+  # A shell command with a pipe, so it needs a shell.
+  - name: worker
+    command: "ls ./jobs | xargs -n1 ./run-job.sh"
+    directory: ./worker
+    shell: true
+    depends_on: [api]
+
+  # A one-shot maintenance task: run once, report the exit, do not restart.
+  - name: migrate
+    command: [go, run, ./cmd/migrate]
+    directory: ./api
+    depends_on:
+      db: healthy
+    restart:
+      policy: never
+
+  # An exec health check: the command must exit 0.
+  - name: cache-warmer
+    command: [./cache-warmer]
+    directory: ./tools
+    health:
+      type: exec
+      target: ./cache-warmer --check
+      interval: 30s
