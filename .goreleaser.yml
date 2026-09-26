@@ -1,0 +1,58 @@
+version: 2
+
+project_name: dashdev
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: dashdev
+    main: ./cmd/dashdev
+    binary: dashdev
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X github.com/HalxDocs/dashdev/internal/buildinfo.version={{.Version}}
+      - -X github.com/HalxDocs/dashdev/internal/buildinfo.commit={{.Commit}}
+      - -X github.com/HalxDocs/dashdev/internal/buildinfo.date={{.Date}}
+
+archives:
+  - id: dashdev
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+      - CHANGELOG.md
+      - dashdev.example.yaml
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  draft: true
