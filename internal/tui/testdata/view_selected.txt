@@ -1,0 +1,24 @@
+dashdev  3 services · 1 running · 1 crashed
+  api                    running  worker  crashed                                                         
+> worker                 crashed  crashed: exit code 7 · restarts 2 · next attempt in 6s                  
+  db                     stopped  reason: exit code 7                                                     
+                                                                                                          
+                                  10:30:00 out working on batch 12                                        
+                                  10:30:00 err batch 12 failed                                            
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+↑/↓ select · enter start · r restart · s stop · pgup/pgdn logs · g/G top/bottom · q quit

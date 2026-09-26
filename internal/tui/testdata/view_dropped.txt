@@ -1,0 +1,24 @@
+dashdev  3 services · 1 running · 1 crashed · 412 events dropped
+> api                    running  api  running                                                            
+  worker                 crashed  up 1m30s (pid 4321) · health healthy                                    
+  db                     stopped                                                                          
+                                  pid 4321 · cpu 12.5% · memory 48.0 MB                                   
+                                  10:30:00 out listening on :8080                                         
+                                  10:30:00 err warning: DEBUG is set                                      
+                                  10:30:00 out very long line very long line very long line very long lin…
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+                                                                                                          
+↑/↓ select · enter start · r restart · s stop · pgup/pgdn logs · g/G top/bottom · q quit
