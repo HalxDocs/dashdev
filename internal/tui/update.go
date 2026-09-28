@@ -154,10 +154,13 @@ func (m *Model) apply(batch []events.Event) {
 			m.addService(event.Status)
 
 		case events.StateChanged:
-			m.statuses[event.Status.Name] = event.Status
+			// A state change for a service the dashboard never listed still
+			// lists it: the event bus drops rather than blocks under load,
+			// so a lost ServiceAdded must not hide a service forever.
+			m.addService(event.Status)
 
 		case events.StatusUpdated:
-			m.statuses[event.Status.Name] = event.Status
+			m.addService(event.Status)
 
 		case events.StatsUpdated:
 			if status, known := m.statuses[event.Name]; known {
