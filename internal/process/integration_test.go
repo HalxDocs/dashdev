@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -34,6 +35,9 @@ type integrationRun struct {
 
 	mu       sync.Mutex
 	observed map[string]service.Status
+	// firstRunning records services in the order the manager first
+	// published them as running.
+	firstRunning []string
 }
 
 // startIntegration loads a configuration, starts a manager on real processes and
@@ -83,6 +87,9 @@ func startIntegration(t *testing.T, configPath string) *integrationRun {
 					run.observed[event.Status.Name] = event.Status
 				case events.StateChanged:
 					run.observed[event.Status.Name] = event.Status
+					if event.To == service.StateRunning && !slices.Contains(run.firstRunning, event.Status.Name) {
+						run.firstRunning = append(run.firstRunning, event.Status.Name)
+					}
 				case events.StatusUpdated:
 					run.observed[event.Status.Name] = event.Status
 				}
@@ -155,6 +162,22 @@ func (r *integrationRun) firstLine(name string) (logs.Line, bool) {
 		return logs.Line{}, false
 	}
 	return lines[0], true
+}
+
+// waitRunningOrder waits until both services have been published as running
+// and asserts the first runs before the second.
+func (r *integrationRun) waitRunningOrder(first, second string) {
+	r.t.Helper()
+	r.waitFor(first+" and "+second+" to be published as running", func() bool {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		return slices.Contains(r.firstRunning, first) && slices.Contains(r.firstRunning, second)
+	})
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if slices.Index(r.firstRunning, first) > slices.Index(r.firstRunning, second) {
+		r.t.Errorf("running order = %v, want %s before %s", r.firstRunning, first, second)
+	}
 }
 
 // TestIntegrationRunsRealProcessesAndLeavesNoneBehind is the test that keeps
@@ -278,18 +301,17 @@ func TestIntegrationDependenciesAreOrderedAndFollowAFailure(t *testing.T) {
 		t.Errorf("api reason = %q, want it to have started on its own rather than waited", status.Reason)
 	}
 
-	// The dependent really ran, and its first output was recorded after the
-	// output of the service it needs.
+	// The dependent really ran, and the manager released it only after the
+	// service it needs was running. This asserts on the manager's published
+	// order, not on log timestamps: two processes printing "ready"
+	// microseconds apart says nothing about who started first, but the
+	// dependency gate guarantees db reached running before api was started.
 	run.waitFor("both services to produce output", func() bool {
 		_, db := run.firstLine("db")
 		_, api := run.firstLine("api")
 		return db && api
 	})
-	dbLine, _ := run.firstLine("db")
-	apiLine, _ := run.firstLine("api")
-	if apiLine.Time.Before(dbLine.Time) {
-		t.Errorf("api produced output at %s, before db at %s", apiLine.Time, dbLine.Time)
-	}
+	run.waitRunningOrder("db", "api")
 
 	// The dependency of watcher ends for good, so watcher has to end with it.
 	run.waitState("doomed", service.StateCrashed)

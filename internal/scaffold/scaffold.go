@@ -66,11 +66,7 @@ func Render(report Report) ([]byte, error) {
 	}
 	document := fileDocument{Version: config.Version}
 	for _, service := range report.Services {
-		document.Services = append(document.Services, fileService{
-			Name:      service.Name,
-			Command:   service.Command,
-			Directory: service.Directory,
-		})
+		document.Services = append(document.Services, fileService(service))
 	}
 	encoded, err := yaml.Marshal(&document)
 	if err != nil {
