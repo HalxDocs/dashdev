@@ -45,6 +45,7 @@ bin/dashdev up
 
 ```sh
 dashdev up [--config PATH] [--headless] [--grace DURATION]
+dashdev init [--config PATH] [--force]
 dashdev version [--json]
 dashdev help
 ```
@@ -53,6 +54,10 @@ dashdev help
   lines instead. This is what a script or an integration test wants.
 - `--grace` is how long a service has to stop cleanly before it is killed
   (default `5s`).
+- `init` writes a starting `dashdev.yaml` from the current directory: Go
+  commands and Node `dev`/`start` scripts become services, one level of
+  subdirectories included. Anything it cannot describe is printed as a hint
+  instead of guessed. Refuses to overwrite without `--force`.
 
 Exit codes are part of the contract: `0` success, `1` a configuration or runtime
 failure, `2` a command line `dashdev` does not understand.
