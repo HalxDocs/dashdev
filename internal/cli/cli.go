@@ -32,6 +32,7 @@ const usage = `dashdev — one command to understand and control the local servi
 
 usage:
   dashdev up [flags]        start every service in dashdev.yaml
+  dashdev init [flags]      write a starting dashdev.yaml from this directory
   dashdev version [flags]   print the version and build details
   dashdev help              print this message
 
@@ -43,6 +44,11 @@ flags for up:
 
 flags for version:
   --json          print machine readable build information
+
+flags for init:
+  --config PATH   where to write the configuration (default: dashdev.yaml
+                  in the working directory)
+  --force         overwrite an existing configuration file
 `
 
 // Env carries everything the command line needs from the outside world, so that
@@ -65,6 +71,8 @@ func Run(ctx context.Context, args []string, env Env) int {
 	switch args[0] {
 	case "up":
 		return runUp(ctx, args[1:], env)
+	case "init":
+		return runInit(args[1:], env)
 	case "version":
 		return runVersion(args[1:], env)
 	case "help", "-h", "--help":
