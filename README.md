@@ -13,10 +13,48 @@ The process manager is the product; the dashboard is just one way to watch it.
 exited; the selected service's health, uptime and log output, and the footer
 of bound keys are all visible.](docs/dashboard.png)
 
+## Install
+
+Grab a ready binary from the [releases page](https://github.com/HalxDocs/dashdev/releases),
+or in one command:
+
+Windows (PowerShell — downloads the latest release, no admin needed):
+
+```powershell
+$tag = (Invoke-RestMethod https://api.github.com/repos/HalxDocs/dashdev/releases/latest).tag_name
+$ver = $tag.TrimStart('v')
+$zip = "$env:TEMP\dashdev.zip"
+Invoke-WebRequest "https://github.com/HalxDocs/dashdev/releases/download/$tag/dashdev_${ver}_windows_amd64.zip" -OutFile $zip
+New-Item -ItemType Directory -Path "$env:LOCALAPPDATA\dashdev" -Force | Out-Null
+Expand-Archive $zip -DestinationPath "$env:LOCALAPPDATA\dashdev" -Force
+& "$env:LOCALAPPDATA\dashdev\dashdev.exe" version
+```
+
+Then either add `%LOCALAPPDATA%\dashdev` to your PATH or call the binary by
+its full path. In Git Bash the same binary runs as `dashdev.exe up`.
+
+macOS / Linux (drops the binary into `~/.local/bin`, already on PATH on
+most systems — pick the `darwin` or `linux` archive and `amd64` or `arm64`
+to match your machine):
+
+```sh
+tag=$(curl -fsSL https://api.github.com/repos/HalxDocs/dashdev/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+ver=${tag#v}
+mkdir -p ~/.local/bin
+curl -fsSL "https://github.com/HalxDocs/dashdev/releases/download/$tag/dashdev_${ver}_linux_amd64.tar.gz" | tar xz -C ~/.local/bin dashdev
+dashdev version
+```
+
+With Go installed, instead:
+
+```sh
+go install github.com/HalxDocs/dashdev/cmd/dashdev@v0.1.0
+```
+
 ## Build and run
 
 Requires Go 1.26 or newer. The module pins to Go 1.26 and the toolchain is set to
-Go 1.26.4, so a recent Go is enough to build and run without an extra toolchain
+Go 1.26.6, so a recent Go is enough to build and run without an extra toolchain
 install.
 
 ```sh
