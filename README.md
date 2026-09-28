@@ -9,9 +9,9 @@ started stops too — no orphans, no half-dead processes.
 
 The process manager is the product; the dashboard is just one way to watch it.
 
-![dashdev dashboard — a service list with db stopped, api running, and worker
-crashed; the right-hand detail pane, the log viewport, and the footer of bound
-keys are all visible.](docs/dashboard.png)
+![dashdev dashboard — a service list with keyway and demo-sso running and beta
+exited; the selected service's health, uptime and log output, and the footer
+of bound keys are all visible.](docs/dashboard.png)
 
 ## Build and run
 
