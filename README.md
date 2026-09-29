@@ -1,5 +1,8 @@
 # dashdev
 
+[![downloads](https://img.shields.io/github/downloads/HalxDocs/dashdev/total)](https://github.com/HalxDocs/dashdev/releases)
+[![release](https://img.shields.io/github/v/release/HalxDocs/dashdev)](https://github.com/HalxDocs/dashdev/releases/latest)
+
 One command to understand and control the local service system.
 
 `dashdev` reads a single `dashdev.yaml`, starts every service it declares at the
