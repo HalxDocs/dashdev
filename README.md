@@ -48,7 +48,17 @@ dashdev version
 With Go installed, instead:
 
 ```sh
-go install github.com/HalxDocs/dashdev/cmd/dashdev@v0.1.0
+go install github.com/HalxDocs/dashdev/cmd/dashdev@latest
+```
+
+Android (via [Termux](https://termux.dev) — `dashdev` ships an `android/arm64`
+binary since v0.1.2; the dashboard is cramped on small screens, so `--headless`
+is recommended, and grab a Termux wakelock so Android doesn't kill long runs):
+
+```sh
+pkg install curl tar
+curl -fsSL https://github.com/HalxDocs/dashdev/releases/download/v0.1.2/dashdev_0.1.2_android_arm64.tar.gz | tar xz
+./dashdev version
 ```
 
 ## Build and run
