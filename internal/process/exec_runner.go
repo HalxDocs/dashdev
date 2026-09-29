@@ -47,6 +47,24 @@ func (*ExecRunner) Start(_ context.Context, spec service.Spec) (Handle, error) {
 		return nil, fmt.Errorf("start service %q: %w", spec.Name, err)
 	}
 
+	// The service is contained before it can spawn anything it could later
+	// outlive: on Windows this is a Job Object holding the whole tree, on
+	// Unix a no-op next to the process group from PrepareProcess.
+	job, err := platform.NewJob()
+	if err != nil {
+		_ = platform.Kill(cmd.Process)
+		closePipe(stdoutReader, stdoutWriter)
+		closePipe(stderrReader, stderrWriter)
+		return nil, fmt.Errorf("start service %q: %w", spec.Name, err)
+	}
+	if err := job.Assign(cmd.Process); err != nil {
+		_ = platform.Kill(cmd.Process)
+		_ = job.Close()
+		closePipe(stdoutReader, stdoutWriter)
+		closePipe(stderrReader, stderrWriter)
+		return nil, fmt.Errorf("start service %q: %w", spec.Name, err)
+	}
+
 	return &execHandle{
 		cmd:       cmd,
 		pid:       cmd.Process.Pid,
@@ -55,6 +73,7 @@ func (*ExecRunner) Start(_ context.Context, spec service.Spec) (Handle, error) {
 		stdoutEnd: stdoutWriter,
 		stderr:    stderrReader,
 		stderrEnd: stderrWriter,
+		job:       job,
 		done:      make(chan struct{}),
 	}, nil
 }
@@ -110,6 +129,12 @@ type execHandle struct {
 	stderr    *io.PipeReader
 	stderrEnd *io.PipeWriter
 
+	// job holds the service's process tree. It is closed once the direct
+	// child is reaped, which on Windows terminates any grandchildren still
+	// holding inherited pipe handles — without this, Wait below would block
+	// until they exit on their own.
+	job platform.Job
+
 	done chan struct{}
 	once sync.Once
 	exit ExitInfo
@@ -150,7 +175,9 @@ func (h *execHandle) wait() ExitInfo {
 		h.exit = info
 		// Closing our own write ends gives the manager's reader goroutines
 		// their EOF, which is what lets teardown be observed rather than
-		// assumed.
+		// assumed. Closing the job first reaps grandchildren that inherited
+		// the pipes, so Wait cannot block on output that will never end.
+		_ = h.job.Close()
 		closePipe(nil, h.stdoutEnd)
 		closePipe(nil, h.stderrEnd)
 		close(h.done)
@@ -165,14 +192,20 @@ func (h *execHandle) terminate() error {
 	return platform.Terminate(h.cmd.Process)
 }
 
-// hardStop kills the process and waits for it to be reaped, so that a caller
-// which returns from Signal knows nothing of the old process survives.
+// hardStop kills the process tree and waits for it to be reaped, so that a
+// caller which returns from Signal knows nothing of the old process survives.
+//
+// The job is closed before waiting rather than after reaping: grandchildren
+// inherit the operating system pipes behind stdout and stderr, and Wait
+// cannot return while those pipes are open. Killing only the direct child
+// would deadlock here and orphan the tree holding the service's ports.
 func (h *execHandle) hardStop(ctx context.Context) error {
 	if h.cmd.Process != nil {
-		if err := platform.Kill(h.cmd.Process); err != nil && !errors.Is(err, os.ErrProcessDone) {
-			return fmt.Errorf("kill pid %d: %w", h.pid, err)
-		}
+		// Best effort: the job close below is the guarantee, and a process
+		// that already exited reports an error for being killed again.
+		_ = platform.Kill(h.cmd.Process)
 	}
+	_ = h.job.Close()
 	select {
 	case <-h.done:
 		return nil
