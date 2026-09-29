@@ -17,12 +17,15 @@ builds:
       - darwin
       - windows
       - freebsd
+      - android
     goarch:
       - amd64
       - arm64
     ignore:
       - goos: windows
         goarch: arm64
+      - goos: android
+        goarch: amd64
     ldflags:
       - -s -w
       - -X github.com/HalxDocs/dashdev/internal/buildinfo.version={{.Version}}
