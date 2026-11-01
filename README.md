@@ -325,6 +325,8 @@ internal/tui       the dashboard
 internal/buildinfo version and provenance
 ```
 
+[![Fund my work on FLOSSAfrica](https://flossafrica.com/badge.svg?theme=dark)](https://flossafrica.com/m/halxdocs?p=dashdev)
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to build, test, and raise changes.
